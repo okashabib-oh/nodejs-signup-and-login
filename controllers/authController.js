@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken';
+import { generateToken } from "../utils/generateToken.js";
 
 async function signup(req, res, next) {
 
@@ -12,17 +13,13 @@ async function signup(req, res, next) {
         }
 
         // Username validation
-        const isUsernameExist = await User.findOne({
-            username: username
-        })
+        const isUsernameExist = await User.findOne({ username })
         if (isUsernameExist) {
             return res.status(400).json({ status: false, message: `username ${username} already exist please chooose different one` });
         }
 
         // Email validation
-        const isEmailExist = await User.findOne({
-            email: email
-        })
+        const isEmailExist = await User.findOne({ email })
         if (isEmailExist) {
             return res.status(400).json({ status: false, message: `email ${email} already exist please chooose different one` });
         }
@@ -57,7 +54,7 @@ async function signup(req, res, next) {
 async function login(req, res, next) {
 
     try {
-        const { username, email, password, } = req.body;
+        const { email, password } = req.body;
 
         if (email.trim() == "" || password.trim() == "") {
             return res.status(400).json({ status: false, message: "All fields are required" });
@@ -70,9 +67,8 @@ async function login(req, res, next) {
             })
         }
 
-        const emailCheck = await User.findOne({
-            email: email
-        })
+        const emailCheck = await User.findOne({ email })
+
         if (!emailCheck) {
             return res.status(404).json({ status: false, message: "User not found" });
         }
@@ -83,25 +79,16 @@ async function login(req, res, next) {
             return res.status(400).json({ status: false, message: "Invalid credentials" });
         }
 
-        if (passwordMatch) {
+        const user = await User.findOne({ email })
 
-            const user = await User.findOne({
-                email: email
-            })
+        const token = generateToken(user);
 
-            const token = jwt.sign({
-                id: user._id,
-                username: user.username,
-                email: user.email
-            }, process.env.JWT_SECRET)
-
-            return res.status(200).json({
-                status: true, message: "Logged in successfully", data: {
-                    user,
-                    token
-                }
-            })
-        }
+        return res.status(200).json({
+            status: true, message: "Logged in successfully", data: {
+                user,
+                token
+            }
+        })
 
     } catch (error) {
         return res.status(500).json({
