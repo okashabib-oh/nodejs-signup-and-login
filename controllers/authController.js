@@ -1,6 +1,5 @@
 import User from "../models/User.js";
 import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken';
 import { generateToken } from "../utils/generateToken.js";
 
 async function signup(req, res, next) {
